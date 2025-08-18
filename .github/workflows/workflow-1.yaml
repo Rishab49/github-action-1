@@ -1,0 +1,45 @@
+name: Running pylint
+id: pylint_check
+on :
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: installing python
+        uses : actions/setup-python@v5
+        with:
+          python-version: 3.10
+
+      - name : installing deps
+        run: |
+          pip install -r requirements.txt
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.18.3
+          pylint app.py
+          if[ $? -ne 0 ]; then
+           echo "failing build"
+           exit 1
+          fi
+
+      - name: building image
+        run: |
+          docker build -t rajrishab/github-action-1 .
+
+      - name : security check
+        run : trivy --exit-code 1 --severity CRITICAL image rajrishab/github-action-1
+
+      - name: docker hub login
+        uses: docker/login-action@v3
+        with:
+          username:${{ secrets.DOCKERHUB_USERNAME }}
+          password:${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: pushing to dockerhub
+        run: |
+          docker push rajrishab/github-action-1
