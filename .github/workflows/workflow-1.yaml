@@ -20,7 +20,7 @@ jobs:
           pip install -r requirements.txt
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.18.3
           pylint app.py || true
-          if[ $? -ne 0 ] 
+          if [ $? -ne 0 ]
           then
            echo "failing build"
            exit 1
